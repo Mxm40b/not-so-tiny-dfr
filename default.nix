@@ -52,6 +52,9 @@ newRustPlatform.buildRustPackage {
       substituteInPlace  src/helper/manager.rs --replace-fail "/usr/bin/tiny-dfr" "${placeholder "out"}/bin/tiny-dfr"
       substituteInPlace  src/utils/button_images.rs --replace-fail "/usr/share/tiny-dfr" "${placeholder "out"}/share/tiny-dfr"
       substituteInPlace  src/view/browser_screen.rs --replace-fail "/usr/share/tiny-dfr" "${placeholder "out"}/share/tiny-dfr"
+
+      substituteInPlace  etc/systemd/system/tiny-dfr.service \
+          --replace-fail "/usr/bin" "${placeholder "out"}/bin"
     '';
   preBuild = ''
     cargo clean
@@ -60,5 +63,7 @@ newRustPlatform.buildRustPackage {
         # cp -R $src/share/tiny-dfr/* $out/share/tiny-dfr/
         mkdir -p $out/share/tiny-dfr
         cp -R $src/share/tiny-dfr/* $out/share/tiny-dfr/
+        cp -R etc $out/lib
+        # mv $out/lib/systemd/system/tiny-dfr.service $out/lib/systemd/system/fishy-dfr.service
   '';
 }

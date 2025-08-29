@@ -6,3 +6,6 @@ BindsTo=dev-tiny_dfr_display.device dev-tiny_dfr_backlight.device dev-tiny_dfr_d
 [Service]
 ExecStart=/usr/bin/tiny-dfr
 Restart=always
+
+[Install]
+WantedBy=multi-user.target
