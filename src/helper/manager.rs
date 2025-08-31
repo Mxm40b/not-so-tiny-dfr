@@ -61,6 +61,9 @@ pub struct VlcHelperManager {
     process_info: ProcessInfo,
     auto_restart_enabled: bool,
     socket_path: String,
+    window_class: Option<String>,
+    window_id: Option<u64>,
+    pid: Option<u32>,
 }
 
 pub struct BrowserHelperManager {
@@ -69,6 +72,9 @@ pub struct BrowserHelperManager {
     process_info: ProcessInfo,
     auto_restart_enabled: bool,
     socket_path: String,
+    window_class: Option<String>,
+    window_id: Option<u64>,
+    pid: Option<u32>,
 }
 
 impl HelperManager {
@@ -343,8 +349,13 @@ impl HelperManager {
 
         // Wait a bit before restarting
         std::thread::sleep(Duration::from_secs(RESTART_DELAY_SECONDS));
+<<<<<<< HEAD
 
         // Try to start again
+=======
+        
+        // Try to start again (main helper doesn't need window info)
+>>>>>>> 62c086cd (Enhance media player support in helper and UI management)
         if let Some(_fd) = self.start(user, leader_pid) {
             println!("[HelperManager] Restart successful");
             true
@@ -490,10 +501,13 @@ impl VlcHelperManager {
             process_info: ProcessInfo::new(),
             auto_restart_enabled: true,
             socket_path: "/tmp/touchbar-vlc.sock".to_string(),
+            window_class: None,
+            window_id: None,
+            pid: None,
         }
     }
 
-    pub fn start(&mut self, user: &str, leader_pid: u32) -> Option<i32> {
+    pub fn start(&mut self, user: &str, leader_pid: u32, window_class: &str, window_id: u64, pid: u32) -> Option<i32> {
         if self.process.is_some() {
             return None;
         }
@@ -580,7 +594,7 @@ impl VlcHelperManager {
             return None;
         }
 
-        // Instead of using sudo, we'll run as root but set the effective user ID
+        // Instead of using sudo, we'll run as root but set the effective control over the process without sudo wrapper
         let mut cmd = Command::new(helper_path);
 
         // Set the user ID and group ID for the process
@@ -596,11 +610,26 @@ impl VlcHelperManager {
         for (key, value) in &env_vars {
             cmd.env(key, value);
         }
+<<<<<<< HEAD
 
         println!(
             "[main] Spawning VLC helper: {} (as user {})",
             helper_path, user
         );
+=======
+        
+        // Store window information for restart purposes
+        self.window_class = Some(window_class.to_string());
+        self.window_id = Some(window_id);
+        self.pid = Some(pid);
+        
+        // Add window class, window ID, and PID as environment variables
+        cmd.env("TINY_DFR_WINDOW_CLASS", window_class);
+        cmd.env("TINY_DFR_WINDOW_ID", &window_id.to_string());
+        cmd.env("TINY_DFR_WINDOW_PID", &pid.to_string());
+        
+        println!("[main] Spawning VLC helper: {} (as user {}) for window class: {} (ID: {}, PID: {})", helper_path, user, window_class, window_id, pid);
+>>>>>>> 62c086cd (Enhance media player support in helper and UI management)
         let child = match cmd.spawn() {
             Ok(child) => child,
             Err(e) => {
@@ -748,13 +777,30 @@ impl VlcHelperManager {
 
         // Wait a bit before restarting
         std::thread::sleep(Duration::from_secs(RESTART_DELAY_SECONDS));
+<<<<<<< HEAD
 
         // Try to start again
         if let Some(_fd) = self.start(user, leader_pid) {
             println!("[VlcHelperManager] Restart successful");
             true
+=======
+        
+        // Try to start again with stored window information
+        if let (Some(window_class), Some(window_id), Some(pid)) = (&self.window_class, &self.window_id, &self.pid) {
+            let window_class = window_class.clone();
+            let window_id = *window_id;
+            let pid = *pid;
+            if let Some(_fd) = self.start(user, leader_pid, &window_class, window_id, pid) {
+                println!("[VlcHelperManager] Restart successful");
+                true
+            } else {
+                println!("[VlcHelperManager] Restart failed");
+                self.process_info.status = ProcessStatus::Failed;
+                false
+            }
+>>>>>>> 62c086cd (Enhance media player support in helper and UI management)
         } else {
-            println!("[VlcHelperManager] Restart failed");
+            println!("[VlcHelperManager] Cannot restart: no window information available");
             self.process_info.status = ProcessStatus::Failed;
             false
         }
@@ -865,10 +911,13 @@ impl BrowserHelperManager {
             process_info: ProcessInfo::new(),
             auto_restart_enabled: true,
             socket_path: "/tmp/touchbar-browser.sock".to_string(),
+            window_class: None,
+            window_id: None,
+            pid: None,
         }
     }
 
-    pub fn start(&mut self, user: &str, leader_pid: u32) -> Option<i32> {
+    pub fn start(&mut self, user: &str, leader_pid: u32, window_class: &str, window_id: u64, pid: u32) -> Option<i32> {
         if self.process.is_some() {
             return None;
         }
@@ -965,11 +1014,26 @@ impl BrowserHelperManager {
         for (key, value) in &env_vars {
             cmd.env(key, value);
         }
+<<<<<<< HEAD
 
         println!(
             "[main] Spawning browser helper: {} (as user {})",
             helper_path, user
         );
+=======
+        
+        // Store window information for restart purposes
+        self.window_class = Some(window_class.to_string());
+        self.window_id = Some(window_id);
+        self.pid = Some(pid);
+        
+        // Add window class, window ID, and PID as environment variables
+        cmd.env("TINY_DFR_WINDOW_CLASS", window_class);
+        cmd.env("TINY_DFR_WINDOW_ID", &window_id.to_string());
+        cmd.env("TINY_DFR_WINDOW_PID", &pid.to_string());
+        
+        println!("[main] Spawning browser helper: {} (as user {}) for window class: {} (ID: {}, PID: {})", helper_path, user, window_class, window_id, pid);
+>>>>>>> 62c086cd (Enhance media player support in helper and UI management)
         let child = match cmd.spawn() {
             Ok(child) => child,
             Err(e) => {
@@ -1120,15 +1184,32 @@ impl BrowserHelperManager {
 
         // Wait a bit before restarting
         std::thread::sleep(Duration::from_secs(RESTART_DELAY_SECONDS));
+<<<<<<< HEAD
 
         // Try to start again
         if let Some(_fd) = self.start(user, leader_pid) {
             println!("[BrowserHelperManager] Restart successful");
             true
+=======
+        
+        // Try to start again with stored window information
+        if let (Some(window_class), Some(window_id), Some(pid)) = (&self.window_class, &self.window_id, &self.pid) {
+            let window_class = window_class.clone();
+            let window_id = *window_id;
+            let pid = *pid;
+            if let Some(_fd) = self.start(user, leader_pid, &window_class, window_id, pid) {
+                println!("[BrowserHelperManager] Restart successful");
+                true
+            } else {
+                println!("[BrowserHelperManager] Restart failed");
+                self.process_info.status = ProcessStatus::Failed;
+                false
+            }
+>>>>>>> 62c086cd (Enhance media player support in helper and UI management)
         } else {
-            println!("[BrowserHelperManager] Restart failed");
+            println!("[BrowserHelperManager] Cannot restart: no window information available");
             self.process_info.status = ProcessStatus::Failed;
-            false
+                false
         }
     }
 
